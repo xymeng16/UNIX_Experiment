@@ -1,0 +1,75 @@
+实验1 同步与异步write的效率比较 实验报告
+
+【实验内容】
+通过拷贝一个较大的文件，比较同步和异步系统调用write的效率差异。
+
+【实验原理】
+同步write在执行完write操作后立刻将缓冲区内容写入文件中，异步（默认）则由操作系统决定何时flush。这两者将会有非常大的效率差别。
+
+【实验思路】
+通过read和write系统调用来复制一个大文件，分别设置不同大小的缓冲区。通过比较不同大小缓冲区下同步异步write所耗时间差异来得出结论。
+
+【算法及执行过程】
+1.将大文件读入一个非常大的缓冲区内。如果读入失败（可能是内存不足或权限不够等情况），输出错误信息至标准出错流stderr并退出程序，返回-1。
+2.根据输入参数判断是否为同步模式，并打开待写入的文件。出错处理同上。
+3.将待写入文件的位置指针置为0，源文件缓冲区指针也置为0。
+4.写文件，若当前剩余内容长度不能覆盖一个缓冲区，则将剩余长度的内容写进文件，否则将当前缓冲区长度的内容写进文件。
+5.按4中完成的操作增加源文件缓冲区指针。
+6.如果源文件缓冲区指针未抵达缓冲区末尾，则转至4，否则继续。
+7.输出结果，缓冲区长度翻倍。
+8.若当前缓冲区长度未达到最大缓冲区长度，则转至2，否则继续。
+9.关闭文件，结束程序。
+
+【技巧】
+1.计时：首先要引入头文件sys/times.h。
+文档中对于times系统调用有着如下的叙述（节选）：
+#Name
+
+times - get process times
+
+#Synopsis
+
+#include <sys/times.h>
+
+clock_t times(struct tms *buf);
+
+#Description
+
+times() stores the current process times in the struct tms that buf points to. The struct tms is as defined in <sys/times.h>:
+
+struct tms {
+    clock_t tms_utime;  /* user time */
+    clock_t tms_stime;  /* system time */
+    clock_t tms_cutime; /* user time of children */
+    clock_t tms_cstime; /* system time of children */
+};
+The tms_utime field contains the CPU time spent executing instructions of the calling process. The tms_stime field contains the CPU time spent in the system while executing tasks on behalf of the calling process. The tms_cutime field contains the sum of the tms_utime and tms_cutime values for all waited-for terminated children. The tms_cstime field contains the sum of the tms_stime and tms_cstime values for all waited-for terminated children.
+Times for terminated children (and their descendants) are added in at the moment wait(2) or waitpid(2) returns their process ID. In particular, times of grandchildren that the children did not wait for are never seen.
+
+*All times reported are in clock ticks.
+
+#Return Value
+
+times() returns the number of clock ticks that have elapsed since an arbitrary point in the past. The return value may overflow the possible range of type clock_t. On error, (clock_t) -1 is returned, and errno is set appropriately.
+
+#Notes
+
+The number of clock ticks per second can be obtained using:
+
+sysconf(_SC_CLK_TCK);
+
+实验所用的量为tms结构体中的用户时间tms_utime，系统时间tms_stime，与命令执行所花费的总时间（为times的返回值）。特别要注意的是（*）中所述，所有时间都以clock ticks的形式返回。故我们必须获得机器每秒的clock ticks，由手册中Notes所述，可以用程序中定义的宏#define TICK_PER_SEC sysconf(_SC_CLK_TCK)来简化代码并使含义清晰。
+
+2.要注意处理过程4中剩余长度是否能覆盖整个缓冲区的逻辑。
+
+【实验结果】
+源程序名：timewrite.c 可执行程序名：timewrite 如何编译：gcc timewrite.c -o timewrite 用法：timewrite <outfile> [sync](optional)
+
+【体会和建议】
+1.由系统自动接管何时写入文件会使性能有着极大的提高
+2.虚拟机下磁盘IO速率好像和宿主机下没有什么差异。。
+3.linux建立文件mkfile还可以指定大小并填充0实在是很方便。
+4.建议服务器多开一些时间嘛。。不要一言不合就关机。。
+
+完成人姓名：孟祥毅
+完成时间：代码：10/3/2016 2:44AM 报告：10/3/2016 10:44PM
