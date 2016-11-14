@@ -85,13 +85,13 @@ void takeFork(int id)
 {
 	if(id%2==0) // Right-handers take the right fork first.
 	{
-		lock(forks[id+1]);
+		lock(forks[(id+1)%5]);
 		lock(forks[id]);
 	}
 	else // Left-handers take the left fork first.
 	{
 		lock(forks[id]);
-		lock(forks[id+1]);
+		lock(forks[(id+1)%5]);
 	}
 }
 
@@ -99,12 +99,12 @@ void putFork(int id)
 {
 	if(id%2==0) // Right-handers put the right fork first.
 	{
-		unlock(forks[id+1]);
+		unlock(forks[(id+1)%5]);
 		unlock(forks[id]);
 	}
 	else // Left-handers put the left fork first.
 	{
 		unlock(forks[id]);
-		unlock(forks[id+1]);
+		unlock(forks[(id+1)%5]);
 	}
 }
