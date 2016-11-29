@@ -8,6 +8,7 @@ This is a repository which contains my Unix Experiments on the APUE course.
   Implement a basic shell that have the same function as the bash.
 ## EX 4:Philosopher
   Solving the problem of the philosopher.
-
+## EX 5:Shell with timer
+  Add a timer on the EX2.
 Xiangyi Meng 
 
